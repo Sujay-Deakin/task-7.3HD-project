@@ -4,12 +4,29 @@ pipeline {
     environment {
         SONAR_TOKEN = credentials('SONAR_TOKEN')
         SNYK_TOKEN = credentials('SNYK_TOKEN')
+        PORT = '4910'
+        MONGO_URI = credentials('MONGO_URI')
+        SENDGRID_API_KEY = credentials('SENDGRID_API_KEY')
+        MAIL_FROM = 'your_email@example.com'
+        CLOUDINARY_CLOUD_NAME = 'dffykuylf'
+        CLOUDINARY_API_KEY = credentials('CLOUDINARY_API_KEY')
+        CLOUDINARY_API_SECRET = credentials('CLOUDINARY_API_SECRET')
     }
 
     stages {
         stage('Build') {
             steps {
                 echo 'Building Docker Image'
+                // Inject .env before build
+                bat '''
+                echo PORT=%PORT%> .env
+                echo MONGO_URI=%MONGO_URI%>> .env
+                echo SENDGRID_API_KEY=%SENDGRID_API_KEY%>> .env
+                echo MAIL_FROM=%MAIL_FROM%>> .env
+                echo CLOUDINARY_CLOUD_NAME=%CLOUDINARY_CLOUD_NAME%>> .env
+                echo CLOUDINARY_API_KEY=%CLOUDINARY_API_KEY%>> .env
+                echo CLOUDINARY_API_SECRET=%CLOUDINARY_API_SECRET%>> .env
+                '''
                 bat 'docker build -t task73hd-app:latest .'
             }
         }
@@ -24,41 +41,33 @@ pipeline {
 
         stage('Code Quality (SonarCloud)') {
             steps {
-                withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
-                    bat '''
-                    SET "JAVA_HOME=C:\\Program Files\\Java\\jdk-21"
-                    SET "PATH=%JAVA_HOME%\\bin;%PATH%"
-                    java -version
-                    IF EXIST sonar-scanner (
-                        rmdir /s /q sonar-scanner
-                    )
-                    curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-windows.zip
-                    powershell -Command "Expand-Archive -Force sonar-scanner.zip -DestinationPath sonar-scanner"
+                bat '''
+                SET "JAVA_HOME=C:\\Program Files\\Java\\jdk-21"
+                SET "PATH=%JAVA_HOME%\\bin;%PATH%"
+                java -version
+                IF EXIST sonar-scanner (
+                    rmdir /s /q sonar-scanner
+                )
+                curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-windows.zip
+                powershell -Command "Expand-Archive -Force sonar-scanner.zip -DestinationPath sonar-scanner"
 
-                    SET SONAR_SCANNER_HOME=%cd%\\sonar-scanner\\sonar-scanner-5.0.1.3006-windows
-                    SET PATH=%SONAR_SCANNER_HOME%\\bin;%PATH%"
+                SET SONAR_SCANNER_HOME=%cd%\\sonar-scanner\\sonar-scanner-5.0.1.3006-windows
+                SET PATH=%SONAR_SCANNER_HOME%\\bin;%PATH%
 
-                    echo JAVA_HOME is %JAVA_HOME%
-                    java -version
-
-                    sonar-scanner -Dsonar.login=%SONAR_TOKEN%
-                    '''
-                }
+                sonar-scanner -Dsonar.login=%SONAR_TOKEN%
+                '''
             }
         }
 
         stage('Security (Snyk)') {
             steps {
-                withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
-                    echo 'SNYK SCAN START'
-                    
-                    bat 'npm install -g snyk'
-                    bat "\"C:\\Users\\saket\\AppData\\Roaming\\npm\\snyk.cmd\" auth %SNYK_TOKEN%"
-                    bat "\"C:\\Users\\saket\\AppData\\Roaming\\npm\\snyk.cmd\" test --all-projects --severity-threshold=low --json > snyk-report.json 2> snyk-error.log || exit 0"
-
-                }
+                echo 'SNYK SCAN START'
+                bat 'npm install -g snyk'
+                bat '"C:\\Users\\saket\\AppData\\Roaming\\npm\\snyk.cmd" auth %SNYK_TOKEN%'
+                bat '"C:\\Users\\saket\\AppData\\Roaming\\npm\\snyk.cmd" test --all-projects --severity-threshold=low --json > snyk-report.json 2> snyk-error.log || exit 0'
             }
         }
+
         stage('Deploy to Test') {
             steps {
                 echo 'Deploying Docker container to test environment...'
@@ -67,11 +76,11 @@ pipeline {
                 bat 'curl http://localhost:4910 || exit /b 1'
             }
         }
+
         stage('Release to Production') {
             steps {
                 echo 'Tagging Docker image for production'
                 bat 'docker tag task73hd-app:latest task73hd-app:prod'
-
                 echo 'Running production container'
                 bat '''
                 docker rm -f prod-container || exit 0
