@@ -37,13 +37,41 @@ pipeline{
                 }
             }
         }
+        stage('Security (Snyk + OWASP)') {
+            steps {
+                withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
+                    bat '''
+                    echo === SNYK SCAN START ===
+                    IF NOT EXIST "%APPDATA%\\npm\\snyk.cmd" (
+                        npm install -g snyk
+                    )
+                    snyk auth %SNYK_TOKEN%
+                    snyk test --json > snyk-report.json || exit /b 0
+                    echo === SNYK SCAN COMPLETE ===
 
+                    echo === OWASP DEPENDENCY CHECK START ===
+                    IF EXIST dependency-check (
+                        rmdir /s /q dependency-check
+                    )
+                    mkdir dependency-check
+                    curl -sSLo dependency-check.zip https://github.com/jeremylong/DependencyCheck/releases/download/v8.4.0/dependency-check-8.4.0-release.zip
+                    powershell -Command "Expand-Archive dependency-check.zip -DestinationPath dependency-check"
+                    cd dependency-check\\dependency-check
+                    dependency-check.bat --project "task73hd-app" --scan ../../../ --format "JSON" --out ../../../
+                    echo === OWASP DEPENDENCY CHECK COMPLETE ===
+                    cd ..\\..
+                    '''
+                }
+            }    
+        }
     }
 
     post {
         success {
             echo 'Archiving Docker build artefact...'
             archiveArtifacts artifacts: 'task73hd-app.tar', fingerprint: true
+            archiveArtifacts artifacts: '*.json', fingerprint: true
+
         }
     }
 }
