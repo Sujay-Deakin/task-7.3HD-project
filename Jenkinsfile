@@ -103,7 +103,7 @@ pipeline {
                 echo 'Running production container'
                 bat '''
                 docker rm -f prod-container || exit 0
-                docker run -d --name prod-container -p 8080:4910 task73hd-app:prod
+                docker run -d --name prod-container -p 9090:4910 task73hd-app:prod
                 '''
             }
         }
