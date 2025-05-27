@@ -46,8 +46,9 @@ pipeline {
                     IF NOT EXIST "%APPDATA%\\npm\\snyk.cmd" (
                         npm install -g snyk
                     )
+                    SET PATH=%APPDATA%\\npm;%PATH%
                     snyk auth %SNYK_TOKEN%
-                    snyk test --json > snyk-report.json || exit /b 0
+                    snyk test --json --all-projects > snyk-report.json 2>snyk-error.log || exit /b 0
                     echo === SNYK SCAN COMPLETE ===
 
                     echo === OWASP DEPENDENCY CHECK START ===
@@ -61,7 +62,8 @@ pipeline {
                         --project "task73hd-app" ^
                         --scan . ^
                         --format "JSON" ^
-                        --out .
+                        --out . ^
+                        --disableAssembly
                     echo === OWASP DEPENDENCY CHECK COMPLETE ===
                     '''
                 }
@@ -71,9 +73,11 @@ pipeline {
 
     post {
         success {
-            echo 'Archiving build and security artifacts...'
+            echo 'Archiving build artefacts...'
+            archiveArtifacts artifacts: '*.tar', fingerprint: true
             archiveArtifacts artifacts: '*.json', fingerprint: true
-            archiveArtifacts artifacts: 'task73hd-app.tar', fingerprint: true
+            archiveArtifacts artifacts: 'dependency-check-report.json', fingerprint: true
+            archiveArtifacts artifacts: 'snyk-error.log', fingerprint: true
         }
     }
 }
