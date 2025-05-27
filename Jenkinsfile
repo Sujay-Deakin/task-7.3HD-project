@@ -59,6 +59,15 @@ pipeline {
                 }
             }
         }
+        stage('Deploy to Test') {
+            steps {
+                echo 'Deploying Docker container to test environment...'
+                bat 'docker rm -f task73hd-test || exit 0'
+                bat 'docker run -d -p 4910:4910 --name task73hd-test task73hd-app:latest'
+                bat 'curl http://localhost:4910 || exit /b 1'
+            }
+        }
+        
     }
 
     post {
