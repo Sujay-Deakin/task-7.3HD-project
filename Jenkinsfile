@@ -29,6 +29,7 @@ pipeline {
                 }
                 echo 'Building Docker Image'
                 bat 'docker build -t task73hd-app:latest .'
+                bat 'docker save -o task73hd-app.tar task73hd-app:latest'
             }
         }
 
@@ -93,6 +94,7 @@ pipeline {
 
     post {
         success {
+            archiveArtifacts artifacts: 'task73hd-app.tar', fingerprint: true
             archiveArtifacts artifacts: '*.json', fingerprint: true
             archiveArtifacts artifacts: 'snyk-error.log', fingerprint: true
         }
