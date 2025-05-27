@@ -51,6 +51,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
                     echo 'SNYK SCAN START'
+                    bat 'SET PATH=%APPDATA%\\npm;%PATH%'
                     bat 'npm install -g snyk'
                     bat "snyk auth %SNYK_TOKEN%"
                     bat "snyk test --all-projects --severity-threshold=low --json > snyk-report.json 2> snyk-error.log || exit 0"
