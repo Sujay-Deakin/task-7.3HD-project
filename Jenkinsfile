@@ -43,7 +43,6 @@ pipeline {
                 bat 'start /B node server.js'
                 timeout(time: 7, unit: 'SECONDS'){
                     bat 'npm test'
-                    bat 'FOR /F "tokens=5" %%a IN (\'netstat -aon ^| findstr :4910\') DO taskkill /F /PID %%a'
                 }
             }
         }
