@@ -76,7 +76,6 @@ pipeline {
             echo 'Archiving build artefacts...'
             archiveArtifacts artifacts: '*.tar', fingerprint: true
             archiveArtifacts artifacts: '*.json', fingerprint: true
-            archiveArtifacts artifacts: 'dependency-check-report.json', fingerprint: true
             archiveArtifacts artifacts: 'snyk-error.log', fingerprint: true
         }
     }
