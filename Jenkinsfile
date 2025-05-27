@@ -67,7 +67,18 @@ pipeline {
                 bat 'curl http://localhost:4910 || exit /b 1'
             }
         }
-        
+        stage('Release to Production') {
+            steps {
+                echo 'Tagging Docker image for production'
+                bat 'docker tag task73hd-app:latest task73hd-app:prod'
+
+                echo 'Running production container'
+                bat '''
+                docker rm -f prod-container || exit 0
+                docker run -d --name prod-container -p 8080:4910 task73hd-app:prod
+                '''
+            }
+        }
     }
 
     post {
