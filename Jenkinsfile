@@ -5,12 +5,13 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building Docker Image'
-                bat 'docker build -t task73hd-app .'
+                bat 'docker build -t task73hd-app:latest .'
             }
         }
 
         stage('Test') {
             steps {
+                echo 'Running Mocha tests'
                 bat 'npm install'
                 bat 'npm test || exit /b 0'
             }
