@@ -39,11 +39,19 @@ pipeline {
             steps {
                 echo 'Running Mocha tests'
                 bat 'npm install'
-                // bat 'npm install -g nyc'
-                // bat 'start /B node server.js'
+
+                bat '''
                 start "server" cmd /c "node server.js > server.log 2>&1"
-                timeout /t 10
-                    bat 'npm test || exit /b 0'
+                for /l %%x in (1, 1, 10) do (
+                    curl http://localhost:4910/health && goto success
+                    timeout /t 2 >nul
+                )
+                echo App not responding. Failing test.
+                exit /b 1
+                :success
+                '''
+
+                bat 'npm test || exit /b 0'
             }
         }
 
