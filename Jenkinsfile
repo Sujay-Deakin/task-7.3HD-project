@@ -39,7 +39,7 @@ pipeline {
             steps {
                 echo 'Running Mocha tests'
                 bat 'npm install'
-                bat 'npm install -g nyc'
+                // bat 'npm install -g nyc'
                 bat 'start /B node server.js'
                 timeout(time: 7, unit: 'SECONDS'){
                     bat 'npm test || exit /b 0'
