@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        SONAR_TOKEN = credentials('SONAR_TOKEN')
+        SNYK_TOKEN = credentials('SNYK_TOKEN')
+    }
+
     stages {
         stage('Build') {
             steps {
@@ -42,31 +47,13 @@ pipeline {
             }
         }
 
-        stage('Security (Snyk + OWASP)') {
+        stage('Security (Snyk)') {
             steps {
                 withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
-                    echo '=== SNYK SCAN START ==='
+                    echo 'SNYK SCAN START'
                     bat 'npm install -g snyk'
-                    bat 'snyk auth %SNYK_TOKEN%'
-                    bat 'snyk test --all-projects --severity-threshold=low || exit 0'
-                    bat 'snyk test --json --all-projects > snyk-report.json 2>snyk-error.log || exit /b 0'
-                    echo '=== SNYK SCAN COMPLETE ==='
-
-                    // echo === OWASP DEPENDENCY CHECK START ===
-                    // IF EXIST dependency-check (
-                    //     rmdir /s /q dependency-check
-                    // )
-                    // mkdir dependency-check
-                    // curl -sSLo dependency-check.zip https://github.com/jeremylong/DependencyCheck/releases/download/v8.4.0/dependency-check-8.4.0-release.zip
-                    // powershell -Command "Expand-Archive dependency-check.zip -DestinationPath dependency-check"
-                    // dependency-check\\dependency-check\\bin\\dependency-check.bat ^
-                    //     --project "task73hd-app" ^
-                    //     --scan . ^
-                    //     --format "JSON" ^
-                    //     --out . ^
-                    //     --disableAssembly
-                    // echo === OWASP DEPENDENCY CHECK COMPLETE ===
-                    // '''
+                    bat "snyk auth %SNYK_TOKEN%"
+                    bat "snyk test --all-projects --severity-threshold=low || exit 0"
                 }
             }
         }
