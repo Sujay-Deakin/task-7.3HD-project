@@ -48,8 +48,8 @@ pipeline {
                     echo '=== SNYK SCAN START ==='
                     bat 'npm install -g snyk'
                     bat 'snyk auth %SNYK_TOKEN%'
-                    bat "snyk test --all-projects --severity-threshold=low || exit 0"
-                    bat 'snyk test --json --all-projects > snyk-report.json 2>snyk-error.log || exit /b 0
+                    bat 'snyk test --all-projects --severity-threshold=low || exit 0'
+                    bat 'snyk test --json --all-projects > snyk-report.json 2>snyk-error.log || exit /b 0'
                     echo '=== SNYK SCAN COMPLETE ==='
 
                     // echo === OWASP DEPENDENCY CHECK START ===
