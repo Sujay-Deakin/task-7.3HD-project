@@ -16,17 +16,18 @@ pipeline {
     stages {
         stage('Build') {
             steps {
+                script {
+                    writeFile file: '.env', text: """
+        PORT=4910
+        MONGO_URI=${env.MONGO_URI}
+        SENDGRID_API_KEY=${env.SENDGRID_API_KEY}
+        MAIL_FROM=${env.MAIL_FROM}
+        CLOUDINARY_CLOUD_NAME=${env.CLOUDINARY_CLOUD_NAME}
+        CLOUDINARY_API_KEY=${env.CLOUDINARY_API_KEY}
+        CLOUDINARY_API_SECRET=${env.CLOUDINARY_API_SECRET}
+        """
+                }
                 echo 'Building Docker Image'
-                // Inject .env before build
-                bat '''
-                echo PORT=%PORT%> .env
-                echo MONGO_URI=%MONGO_URI%>> .env
-                echo SENDGRID_API_KEY=%SENDGRID_API_KEY%>> .env
-                echo MAIL_FROM=%MAIL_FROM%>> .env
-                echo CLOUDINARY_CLOUD_NAME=%CLOUDINARY_CLOUD_NAME%>> .env
-                echo CLOUDINARY_API_KEY=%CLOUDINARY_API_KEY%>> .env
-                echo CLOUDINARY_API_SECRET=%CLOUDINARY_API_SECRET%>> .env
-                '''
                 bat 'docker build -t task73hd-app:latest .'
             }
         }
