@@ -7,8 +7,8 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 
-# Expose port (match your .env PORT or default)
-EXPOSE 3000
+# Expose port
+EXPOSE 4910
 
 # Start the app
 CMD ["node", "server.js"]
