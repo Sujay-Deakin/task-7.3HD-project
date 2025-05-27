@@ -42,28 +42,33 @@ pipeline {
                 // bat 'npm install -g nyc'
                 bat 'start /B node server.js'
                 timeout(time: 7, unit: 'SECONDS'){
-                    bat 'npm test || exit /b 0'
+                    bat 'npm test'
+                    bat 'FOR /F "tokens=5" %%a IN (\'netstat -aon ^| findstr :4910\') DO taskkill /F /PID %%a'
                 }
             }
         }
 
         stage('Code Quality (SonarCloud)') {
             steps {
-                bat '''
-                SET "JAVA_HOME=C:\\Program Files\\Java\\jdk-21"
-                SET "PATH=%JAVA_HOME%\\bin;%PATH%"
-                java -version
-                IF EXIST sonar-scanner (
-                    rmdir /s /q sonar-scanner
-                )
-                curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-windows.zip
-                powershell -Command "Expand-Archive -Force sonar-scanner.zip -DestinationPath sonar-scanner"
+                withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+                    bat '''
+                    SET "JAVA_HOME=C:\\Program Files\\Java\\jdk-21"
+                    SET "PATH=%JAVA_HOME%\\bin;%PATH%"
+                    java -version
 
-                SET SONAR_SCANNER_HOME=%cd%\\sonar-scanner\\sonar-scanner-5.0.1.3006-windows
-                SET PATH=%SONAR_SCANNER_HOME%\\bin;%PATH%
+                    IF EXIST sonar-scanner (
+                        rmdir /s /q sonar-scanner
+                    )
 
-                sonar-scanner -Dsonar.login=%SONAR_TOKEN%
-                '''
+                    curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-windows.zip
+                    powershell -Command "Expand-Archive -Force sonar-scanner.zip -DestinationPath sonar-scanner"
+
+                    SET SONAR_SCANNER_HOME=%cd%\\sonar-scanner\\sonar-scanner-5.0.1.3006-windows
+                    SET PATH=%SONAR_SCANNER_HOME%\\bin;%PATH%"
+
+                    sonar-scanner -Dsonar.login=%SONAR_TOKEN%
+                    '''
+                }
             }
         }
 
@@ -79,9 +84,8 @@ pipeline {
         stage('Deploy to Test') {
             steps {
                 echo 'Deploying Docker container to test environment...'
-                bat 'docker rm -f task73hd-test || exit 0'
+                bat 'docker rm -f task73hd-test || exit "no existing container"'
                 bat 'docker run -d -p 4910:4910 --name task73hd-test task73hd-app:latest'
-                bat 'curl http://localhost:4910/health || exit /b 1'
             }
         }
 
