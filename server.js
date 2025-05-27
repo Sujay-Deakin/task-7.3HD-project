@@ -11,7 +11,7 @@ const fs = require('fs')
 var dateTime = require('node-datetime');
 var bodyParser=require('body-parser')
 require('dotenv').config();
-var port=process.env.PORT
+var port = process.env.PORT || 4910;
 var member=express()
 
 var admin=express()
