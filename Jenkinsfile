@@ -27,6 +27,8 @@ pipeline {
         CLOUDINARY_API_SECRET=${env.CLOUDINARY_API_SECRET}
         """
                 }
+                echo 'Verifying .env contents'
+                bat 'type .env'
                 echo 'Building Docker Image'
                 bat 'docker build -t task73hd-app:latest .'
                 bat 'docker save -o task73hd-app.tar task73hd-app:latest'
