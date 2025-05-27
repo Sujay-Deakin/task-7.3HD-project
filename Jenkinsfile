@@ -1,12 +1,12 @@
-pipeline{
+pipeline {
     agent any
 
-    stages{
+    stages {
         stage('Build') {
             steps {
                 echo 'Building Docker Image'
                 bat 'docker build -t task73hd-app .'
-                echo ' Saving Docker Image as Artifact'
+                echo 'Saving Docker Image as Artifact'
                 bat 'docker save -o task73hd-app.tar task73hd-app'
             }
         }
@@ -14,7 +14,7 @@ pipeline{
         stage('Test') {
             steps {
                 bat 'npm install'
-                bat 'npm test || exit /b 0' 
+                bat 'npm test || exit /b 0'
             }
         }
 
@@ -31,12 +31,13 @@ pipeline{
                     curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-windows.zip
                     powershell -Command "Expand-Archive sonar-scanner.zip -DestinationPath sonar-scanner"
                     SET SONAR_SCANNER_HOME=%cd%\\sonar-scanner\\sonar-scanner-5.0.1.3006-windows
-                    SET PATH=%SONAR_SCANNER_HOME%\\bin;%PATH%
+                    SET PATH=%SONAR_SCANNER_HOME%\\bin;%PATH%"
                     sonar-scanner -Dsonar.login=%SONAR_TOKEN%
                     '''
                 }
             }
         }
+
         stage('Security (Snyk + OWASP)') {
             steps {
                 withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
@@ -56,22 +57,23 @@ pipeline{
                     mkdir dependency-check
                     curl -sSLo dependency-check.zip https://github.com/jeremylong/DependencyCheck/releases/download/v8.4.0/dependency-check-8.4.0-release.zip
                     powershell -Command "Expand-Archive dependency-check.zip -DestinationPath dependency-check"
-                    cd dependency-check\\dependency-check
-                    dependency-check.bat --project "task73hd-app" --scan ../../../ --format "JSON" --out ../../../
+                    dependency-check\\dependency-check\\bin\\dependency-check.bat ^
+                        --project "task73hd-app" ^
+                        --scan . ^
+                        --format "JSON" ^
+                        --out .
                     echo === OWASP DEPENDENCY CHECK COMPLETE ===
-                    cd ..\\..
                     '''
                 }
-            }    
+            }
         }
     }
 
     post {
         success {
-            echo 'Archiving Docker build artefact...'
-            archiveArtifacts artifacts: 'task73hd-app.tar', fingerprint: true
+            echo 'Archiving build and security artifacts...'
             archiveArtifacts artifacts: '*.json', fingerprint: true
-
+            archiveArtifacts artifacts: 'task73hd-app.tar', fingerprint: true
         }
     }
 }
