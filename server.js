@@ -53,12 +53,10 @@ app.use("/guest",guest)
 
 app.use(express.static('upload'));
 app.use(express.static('public'));
-app.get('/api/student', (req, res) => {
-  res.json({
-    name: "Enugu Thirumal Reddy",
-    studentId: "s224849242"
-  });
+app.get('/health', (req, res) => {
+  res.send("Healthy");
 });
+
 
 var memberroute = require("./services/routes-member")
 
@@ -137,5 +135,6 @@ server.listen(port,'0.0.0.0',function(err,res){
     if(err){
         console.log("err in starting")
     }
-    console.log("server started at:",port)
+    console.log("server started at:",process.env.PORT)
+    console.log("MONGO_URI:", process.env.MONGO_URI ? "✓" : "✗ missing");
 })
